@@ -1,21 +1,21 @@
 [{
     "user_id" : 1,
     "username" : "jklipton",
-    "token" : "",
+    "token" : "aaa",
     "password" : "friedcheese"
 },{
     "user_id" : 2,
     "username" : "steelewalston",
-    "token" : "",
+    "token" : "bbb",
     "password" : "platypus"
 },{
     "user_id" : 3,
     "username" : "keli",
-    "token" : "",
+    "token" : "ccc",
     "password" : "marbles"
 },{
     "user_id" : 4,
     "username" : "henry",
-    "token" : "",
+    "token" : "ddd",
     "password" : "salmoncookies"
 }]

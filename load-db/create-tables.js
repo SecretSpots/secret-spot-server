@@ -6,12 +6,12 @@ client.query(`
     CREATE TABLE IF NOT EXISTS users (
         user_id SERIAL PRIMARY KEY,
         username VARCHAR(15) NOT NULL UNIQUE,
-        token TEXT(50) NOT NULL UNIQUE,
+        token TEXT NOT NULL UNIQUE,
         password VARCHAR(15) NOT NULL
     );
 `)
     .then(
-        () => console.log('user table loaded'),
+        () => console.log('user table created'),
         err => console.error(err)
     );
 
@@ -21,12 +21,12 @@ client.query(`
         name VARCHAR(255) NOT NULL,
         user_id INT references users(user_id),
         location VARCHAR(255) NOT NULL,
-        note TEXT(200),
-        date DATE NOT NULL,
+        note TEXT,
+        date DATE NOT NULL
     );
 `)
     .then(
-        () => console.log('spot table loaded'),
+        () => console.log('spot table created'),
         err => console.error(err)
     )
     .then( () => client.end());

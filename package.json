@@ -8,9 +8,10 @@
     "start": "node server.js",
     "watch": "nodemon server.js",
     "create": "node load-db/create-tables.js",
-    "delete": "node load-db/delete-tables.js",
+    "delete": "node load-db/drop-tables.js",
     "redo": "npm run delete && npm run create",
-    "seed": "node load-db/seed-data.js"
+    "seed": "node load-db/seed-data.js",
+    "load-all": "npm run redo && npm run seed"
   },
   "repository": {
     "type": "git",
