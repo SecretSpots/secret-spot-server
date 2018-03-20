@@ -20,7 +20,8 @@ client.query(`
         name VARCHAR(255) NOT NULL,
         user_id INT references users(user_id),
         address VARCHAR(255) NOT NULL,
-        location VARCHAR(255) NOT NULL,
+        lat FLOAT(10,6) NOT NULL,
+        lng FLOAT(10,6) NOT NULL,
         note TEXT,
         date DATE NOT NULL
     );

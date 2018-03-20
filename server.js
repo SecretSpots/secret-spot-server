@@ -115,14 +115,15 @@ function insertSpot(spot) {
             name,
             user_id,
             address, 
-            location,
+            lat,
+            lng,
             note,
             date
         )
-        VALUES ($1, $2, $3, $4, $5, $6)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *;
     `,
-    [spot.name, spot.user_id, spot.address, spot.location, spot.note, spot.date]
+    [spot.name, spot.user_id, spot.address, spot.lat, spot.lng, spot.note, spot.date]
     )
         .then(result => result.rows[0]);
 }
