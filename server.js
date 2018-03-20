@@ -22,11 +22,26 @@ app.use(express.urlencoded({ extended:true }));
 
 const client = require('./db-client');
 
-function makeToken(id) {
-    return { token: jwt.sign({ id: id }), TOKEN_KEY };
+function validateUser(request, response, next) {
+    const token = request.get('token') || request.query.token;
+    if(!token) next({ status: 401, message: 'no token found' });
+
+    let payload;
+    try {
+        payload = jwt.verify(token, TOKEN_KEY);
+    } catch(err) {
+        return next({ status: 403, message: 'permission denied' });
+    }
+
+    request.user = payload;
+    next();
 }
 
-app.post('/api/auth/signup', (request, response, next) => {
+function makeToken(id) {
+    return { token: jwt.sign({ id: id }, TOKEN_KEY) };
+}
+
+app.post('/api/v1/auth/signup', (request, response, next) => {
     const credentials = request.body;
     if(!credentials.username || !credentials.password) {
         return next({ status: 400, message: 'username and password required'});
@@ -59,7 +74,7 @@ app.post('/api/auth/signup', (request, response, next) => {
         .catch(next);
 });
 
-app.post('/api/auth/signin', (request, response, next) => {
+app.post('/api/v1/auth/signin', (request, response, next) => {
     const credentials = request.body;
     if(!credentials.username || !credentials.password) {
         return next ({ status: 400, message: 'username and password required' });
