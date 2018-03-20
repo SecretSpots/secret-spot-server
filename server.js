@@ -122,7 +122,7 @@ function insertSpot(spot) {
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *;
     `,
-    [spot.name, spot.user_id, spot.location, spot.location, spot.note, spot.date]
+    [spot.name, spot.user_id, spot.address, spot.location, spot.note, spot.date]
     )
         .then(result => result.rows[0]);
 }

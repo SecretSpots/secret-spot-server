@@ -18,11 +18,11 @@ Promise.all(users.map(user => {
         return Promise.all(secretSpots.map(spot =>
         {
             return client.query(`
-                INSERT INTO spots (name, user_id, location, note, date)
-                VALUES ($1, $2, $3, $4, $5);
+                INSERT INTO spots (name, user_id, address, location, note, date)
+                VALUES ($1, $2, $3, $4, $5, $6);
                 `,
             [
-                spot.name, spot.user_id, spot.location, spot.note, spot.date
+                spot.name, spot.user_id, spot.address, spot.location, spot.note, spot.date
             ]);
         }));
     })

@@ -19,6 +19,7 @@ client.query(`
         spot_id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         user_id INT references users(user_id),
+        address VARCHAR(255) NOT NULL,
         location VARCHAR(255) NOT NULL,
         note TEXT,
         date DATE NOT NULL
