@@ -109,17 +109,17 @@ app.get('/api/v1/spots', (request, response) => {
 
 });
 
-app.get('api/spots/:id', (request, response, next) => {
+app.get('/api/v1/spots/:id', (request, response, next) => {
     const id = request.params.id;
     client.query(`
         SELECT * 
         FROM spots
-        WHERE id = $1;
+        WHERE spot_id = $1;
     `,
     [id]
     )
         .then(result => {
-            if(result.rows.length === 0) next({ status: 404, message: `Books id ${id} does not exist`});
+            if(result.rows.length === 0) next({ status: 404, message: `Spot id ${id} does not exist`});
             else response.send(result.rows[0]);
         })
         .catch(next);
