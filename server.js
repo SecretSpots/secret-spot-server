@@ -109,6 +109,34 @@ app.get('/api/v1/spots', (request, response) => {
 
 });
 
+function insertSpot(spot) {
+    return client.query(`
+        INSERT INTO spots (
+            spot_id,
+            name,
+            user_id, 
+            location,
+            note,
+            date
+        )
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *;
+    `,
+    [spot.spot_id, spot.name, spot.user_id, spot.location, spot.note, spot.date]
+    )
+        .then(result => result.rows[0]);
+}
+
+app.post('/api/v1/spots/new', (request, response) => {
+    const body = request.body;
+
+    insertSpot(body)
+        .then(result => response.send(result))
+        .catch(error => {
+            console.error(error);
+            response.sendStatus(500);
+        });
+});
 
 app.use((err, request, response, next) => { // eslint-disable-line
     console.error(err);
