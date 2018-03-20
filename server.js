@@ -35,20 +35,22 @@ app.get('/api/v1/spots', (request, response) => {
 function insertSpot(spot) {
     return client.query(`
         INSERT INTO spots (
-            name, 
+            spot_id,
+            name,
+            user_id, 
             location,
             note,
-            date,
+            date
         )
-        VALUES ($2, $4, $5, $6)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *;
     `,
-    [spot.name, spot.location, spot.note, spot.date]
+    [spot.spot_id, spot.name, spot.user_id, spot.location, spot.note, spot.date]
     )
         .then(result => result.rows[0]);
 }
 
-app.post('/api/spots/new', (request, response) => {
+app.post('/api/v1/spots/new', (request, response) => {
     const body = request.body;
 
     insertSpot(body)
