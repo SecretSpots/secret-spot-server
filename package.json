@@ -1,0 +1,39 @@
+{
+  "name": "secret-spot-server",
+  "version": "1.0.0",
+  "description": "**Author**: Steele Walston, Jen Lipton, Henry Oliveira, Keli Hansen\r **Version**: 1.0.0",
+  "main": "db-client.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "watch": "nodemon server.js",
+    "create": "node load-db/create-tables.js",
+    "delete": "node load-db/drop-tables.js",
+    "redo": "npm run delete && npm run create",
+    "seed": "node load-db/seed-data.js",
+    "load-all": "npm run redo && npm run seed"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SecretSpots/secret-spot-server.git"
+  },
+  "author": "Jen Lipton",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SecretSpots/secret-spot-server/issues"
+  },
+  "homepage": "https://github.com/SecretSpots/secret-spot-server#readme",
+  "dependencies": {
+    "cors": "^2.8.4",
+    "dotenv": "^5.0.1",
+    "express": "^4.16.3",
+    "jsonwebtoken": "^8.2.0",
+    "morgan": "^1.9.0",
+    "pg": "^7.4.1",
+    "superagent": "^3.8.2"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.0",
+    "nodemon": "^1.17.2"
+  }
+}
