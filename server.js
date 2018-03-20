@@ -47,7 +47,7 @@ app.post('/api/auth/signup', (request, response, next) => {
             return client.query(`
                 INSERT INTO users (username, password)
                 VALUES ($1, $2)
-                RETURNING id, username;
+                RETURNING user_id, username;
             `,
             [credentials.username, credentials.password]
             );
@@ -57,6 +57,28 @@ app.post('/api/auth/signup', (request, response, next) => {
             response.send(token);
         })
         .catch(next);
+});
+
+app.post('/api/auth/signin', (request, response, next) => {
+    const credentials = request.body;
+    if(!credentials.username || !credentials.password) {
+        return next ({ status: 400, message: 'username and password required' });
+    }
+
+    client.query(`
+        SELECT user_id, password
+        FROM users
+        WHERE username=$1
+    `,
+    [credentials.username]
+    )
+        .then(result => {
+            if(result.rows.length === 0 || result.rows[0].password !== credentials.password) {
+                return next({ status: 401, message: 'invalid username or password' });
+            }
+            const token = makeToken(result.rows[0].id);
+            response.send(token);
+        });
 });
 
 app.get('/api/v1/spots', (request, response) => {
