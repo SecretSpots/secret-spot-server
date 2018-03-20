@@ -112,9 +112,9 @@ app.get('/api/v1/spots', (request, response) => {
 function insertSpot(spot) {
     return client.query(`
         INSERT INTO spots (
-            spot_id,
             name,
-            user_id, 
+            user_id,
+            address, 
             location,
             note,
             date
@@ -122,7 +122,7 @@ function insertSpot(spot) {
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *;
     `,
-    [spot.spot_id, spot.name, spot.user_id, spot.location, spot.note, spot.date]
+    [spot.name, spot.user_id, spot.location, spot.location, spot.note, spot.date]
     )
         .then(result => result.rows[0]);
 }
