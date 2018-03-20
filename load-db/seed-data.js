@@ -6,11 +6,11 @@ const users = require('./user-table.json');
 
 Promise.all(users.map(user => {
     return client.query(`
-        INSERT INTO users (username, token, password)
-        VALUES ($1, $2, $3);
+        INSERT INTO users (username, password)
+        VALUES ($1, $2);
         `,
     [
-        user.username, user.token, user.password
+        user.username, user.password
     ]);
 }))
     .then (() => console.log('user table seeded'))

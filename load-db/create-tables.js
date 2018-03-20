@@ -5,9 +5,8 @@ const client = require('../db-client');
 client.query(`
     CREATE TABLE IF NOT EXISTS users (
         user_id SERIAL PRIMARY KEY,
-        username VARCHAR(15) NOT NULL UNIQUE,
-        token TEXT NOT NULL UNIQUE,
-        password VARCHAR(15) NOT NULL
+        username VARCHAR(16) NOT NULL UNIQUE,
+        password VARCHAR(16) NOT NULL
     );
 `)
     .then(
