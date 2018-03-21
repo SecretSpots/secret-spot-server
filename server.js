@@ -23,17 +23,17 @@ app.use(express.urlencoded({ extended:true }));
 const client = require('./db-client');
 
 function validateUser(request, response, next) {
-    const token = request.get('token') || request.query.token;
-    if(!token) next({ status: 401, message: 'no token found' });
+    const token = request.get('token');
+    if(!token) next({ status: 401, message: 'please sign in' });
 
-    let payload;
+    let decoded;
     try {
-        payload = jwt.verify(token, TOKEN_KEY);
+        decoded = jwt.verify(token, TOKEN_KEY);
     } catch(err) {
-        return next({ status: 403, message: 'permission denied' });
+        return next({ status: 403, message: 'not permitted' });
     }
 
-    request.user = payload;
+    request.user_id = decoded.id;
     next();
 }
 
@@ -69,7 +69,7 @@ app.post('/api/v1/auth/signup', (request, response, next) => {
         })
         .then(result => {
             response.json({
-                token: makeToken(result.rows[0].id),
+                token: makeToken(result.rows[0].user_id),
                 username: result.rows[0].username
             });
         })
@@ -94,7 +94,7 @@ app.post('/api/v1/auth/signin', (request, response, next) => {
                 return next({ status: 401, message: 'invalid username or password' });
             }
             response.json({
-                token: makeToken(result.rows[0].id),
+                token: makeToken(result.rows[0].user_id),
                 username: result.rows[0].username
             });
         });
@@ -116,8 +116,10 @@ app.get('/api/v1/spots', (request, response) => {
 app.get('/api/v1/spots/:id', (request, response, next) => {
     const id = request.params.id;
     client.query(`
-        SELECT * 
+        SELECT spots.name, spots.address, spots.note, spots.date, spots.spot_id, users.username 
         FROM spots
+        INNER JOIN users
+        ON (spots.user_id = users.user_id)
         WHERE spot_id = $1;
     `,
     [id]
@@ -154,6 +156,31 @@ app.post('/api/v1/spots/new', (request, response, next) => {
     insertSpot(body)
         .then(result => response.send(result))
         .catch(next);
+});
+
+app.delete('/api/v1/spots/:id', validateUser, (request, response, next) => {
+    const spot_id = request.params.id;
+
+    client.query(`
+        SELECT user_id FROM spots
+        WHERE spot_id=$1;
+    `,
+    [spot_id]
+    )
+        .then(result1 => {
+            if (result1.rows[0].user_id !== request.user_id) {
+                return next({ status: 403, message: 'you may only delete spots you created' });
+            }
+            return client.query(`
+                DELETE FROM spots
+                WHERE spot_id=$1
+                RETURNING name;
+            `,
+            [spot_id]
+            )
+                .then(result2 => response.send({ removed: result2.rows[0].name }))
+                .catch(next);
+        });
 });
 
 app.use((err, request, response, next) => { // eslint-disable-line
