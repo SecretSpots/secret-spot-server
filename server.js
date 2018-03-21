@@ -162,6 +162,34 @@ app.post('/api/v1/spots/new', (request, response, next) => {
         .catch(next);
 });
 
+app.put('/api/v1/spots/:id', validateUser, (request, response, next) => {
+    const body = request.body;
+    const spot_id = request.params.id;
+
+    client.query(`
+        SELECT user_id FROM spots
+        WHERE spot_id=$1;
+    `,
+    [spot_id]
+    )
+        .then(result => {
+            if(result.rows[0].user_id !== request.user_id) {
+                return next({ status: 403, message: 'You may only update spots you created'});
+            }
+            return client.query(`
+                UPDATE spots
+                SET note=$1
+                WHERE spot_id=$2
+                RETURNING note;
+            `,
+            [body.note, spot_id]
+            );
+        })
+        .then(result => response.send(result.rows[0]))
+        .catch(next);
+
+});
+
 app.delete('/api/v1/spots/:id', validateUser, (request, response, next) => {
     const spot_id = request.params.id;
 
