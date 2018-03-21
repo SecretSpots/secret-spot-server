@@ -109,6 +109,22 @@ app.get('/api/v1/spots', (request, response) => {
 
 });
 
+app.get('/api/v1/spots/:id', (request, response, next) => {
+    const id = request.params.id;
+    client.query(`
+        SELECT * 
+        FROM spots
+        WHERE spot_id = $1;
+    `,
+    [id]
+    )
+        .then(result => {
+            if(result.rows.length === 0) next({ status: 404, message: `Spot id ${id} does not exist`});
+            else response.send(result.rows[0]);
+        })
+        .catch(next);
+});
+
 function insertSpot(spot) {
     return client.query(`
         INSERT INTO spots (
@@ -128,15 +144,12 @@ function insertSpot(spot) {
         .then(result => result.rows[0]);
 }
 
-app.post('/api/v1/spots/new', (request, response) => {
+app.post('/api/v1/spots/new', (request, response, next) => {
     const body = request.body;
 
     insertSpot(body)
         .then(result => response.send(result))
-        .catch(error => {
-            console.error(error);
-            response.sendStatus(500);
-        });
+        .catch(next);
 });
 
 app.use((err, request, response, next) => { // eslint-disable-line
