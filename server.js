@@ -106,8 +106,10 @@ app.post('/api/v1/auth/signin', (request, response, next) => {
 
 app.get('/api/v1/spots', (request, response) => {
     client.query(`
-        SELECT * FROM spots;
-    
+        SELECT spots.name, spots.address, spots.lat, spots.lng, spots.note, spots.date, spots.spot_id, users.username 
+        FROM spots
+        INNER JOIN users
+        ON (spots.user_id = users.user_id);
     `)
         .then(results => response.send(results.rows))
         .catch(error => {
