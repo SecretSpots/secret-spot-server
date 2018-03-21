@@ -5,9 +5,8 @@ const client = require('../db-client');
 client.query(`
     CREATE TABLE IF NOT EXISTS users (
         user_id SERIAL PRIMARY KEY,
-        username VARCHAR(15) NOT NULL UNIQUE,
-        token TEXT NOT NULL UNIQUE,
-        password VARCHAR(15) NOT NULL
+        username VARCHAR(16) NOT NULL UNIQUE,
+        password VARCHAR(16) NOT NULL
     );
 `)
     .then(
@@ -20,7 +19,9 @@ client.query(`
         spot_id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         user_id INT references users(user_id),
-        location VARCHAR(255) NOT NULL,
+        address VARCHAR(255) NOT NULL,
+        lat FLOAT8 NOT NULL,
+        lng FLOAT8 NOT NULL,
         note TEXT,
         date DATE NOT NULL
     );
