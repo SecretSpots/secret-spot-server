@@ -68,8 +68,10 @@ app.post('/api/v1/auth/signup', (request, response, next) => {
             );
         })
         .then(result => {
+            const user_id = result.rows[0].user_id;
             response.json({
-                token: makeToken(result.rows[0].user_id),
+                token: makeToken(user_id),
+                user_id: user_id,
                 username: result.rows[0].username
             });
         })
@@ -93,8 +95,10 @@ app.post('/api/v1/auth/signin', (request, response, next) => {
             if(result.rows.length === 0 || result.rows[0].password !== credentials.password) {
                 return next({ status: 401, message: 'invalid username or password' });
             }
+            const user_id = result.rows[0].user_id;
             response.json({
-                token: makeToken(result.rows[0].user_id),
+                token: makeToken(user_id),
+                user_id: user_id,
                 username: result.rows[0].username
             });
         });
@@ -102,8 +106,10 @@ app.post('/api/v1/auth/signin', (request, response, next) => {
 
 app.get('/api/v1/spots', (request, response) => {
     client.query(`
-        SELECT * FROM spots;
-    
+        SELECT spots.name, spots.address, spots.lat, spots.lng, spots.note, spots.date, spots.spot_id, users.username 
+        FROM spots
+        INNER JOIN users
+        ON (spots.user_id = users.user_id);
     `)
         .then(results => response.send(results.rows))
         .catch(error => {
@@ -156,6 +162,34 @@ app.post('/api/v1/spots/new', (request, response, next) => {
     insertSpot(body)
         .then(result => response.send(result))
         .catch(next);
+});
+
+app.put('/api/v1/spots/:id', validateUser, (request, response, next) => {
+    const body = request.body;
+    const spot_id = request.params.id;
+
+    client.query(`
+        SELECT user_id FROM spots
+        WHERE spot_id=$1;
+    `,
+    [spot_id]
+    )
+        .then(result => {
+            if(result.rows[0].user_id !== request.user_id) {
+                return next({ status: 403, message: 'You may only update spots you created'});
+            }
+            return client.query(`
+                UPDATE spots
+                SET note=$1
+                WHERE spot_id=$2
+                RETURNING note;
+            `,
+            [body.note, spot_id]
+            );
+        })
+        .then(result => response.send(result.rows[0]))
+        .catch(next);
+
 });
 
 app.delete('/api/v1/spots/:id', validateUser, (request, response, next) => {
