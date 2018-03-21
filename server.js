@@ -167,8 +167,8 @@ app.delete('/api/v1/spots/:id', validateUser, (request, response, next) => {
     `,
     [spot_id]
     )
-        .then(result1 => {
-            if (result1.rows[0].user_id !== request.user_id) {
+        .then(result => {
+            if (result.rows[0].user_id !== request.user_id) {
                 return next({ status: 403, message: 'you may only delete spots you created' });
             }
             return client.query(`
@@ -177,10 +177,10 @@ app.delete('/api/v1/spots/:id', validateUser, (request, response, next) => {
                 RETURNING name;
             `,
             [spot_id]
-            )
-                .then(result2 => response.send({ removed: result2.rows[0].name }))
-                .catch(next);
-        });
+            );
+        })
+        .then(result => response.send({ removed: result.rows[0].name }))
+        .catch(next);
 });
 
 app.use((err, request, response, next) => { // eslint-disable-line
