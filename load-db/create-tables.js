@@ -23,7 +23,7 @@ client.query(`
         lat FLOAT8 NOT NULL,
         lng FLOAT8 NOT NULL,
         note TEXT,
-        date DATE NOT NULL
+        date  TIMESTAMP NOT NULL
     );
 `)
     .then(

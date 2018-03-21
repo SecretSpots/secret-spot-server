@@ -4,7 +4,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const PORT = process.env.PORT;
-const MAPS_API_KEY = process.env.MAPS_API_KEY;
+const MAPS_API_KEY = process.env.MAPS_API_KEY; //eslint-disable-line
 const TOKEN_KEY = process.env.TOKEN_KEY;
 
 const express = require('express');
@@ -137,11 +137,11 @@ app.get('/api/v1/spots/:id', (request, response, next) => {
         .catch(next);
 });
 
-function insertSpot(spot) {
+function insertSpot(spot, user_id) {
     return client.query(`
         INSERT INTO spots (
             name,
-            user_id,
+            user_id,     
             address, 
             lat,
             lng,
@@ -151,15 +151,16 @@ function insertSpot(spot) {
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *;
     `,
-    [spot.name, spot.user_id, spot.address, spot.lat, spot.lng, spot.note, spot.date]
+    [spot.name, user_id, spot.address, spot.lat, spot.lng, spot.note, new Date(spot.date)]
     )
         .then(result => result.rows[0]);
 }
 
-app.post('/api/v1/spots/new', (request, response, next) => {
+app.post('/api/v1/spots/new', validateUser, (request, response, next) => {
     const body = request.body;
+    const user_id = request.user_id;
 
-    insertSpot(body)
+    insertSpot(body, user_id)
         .then(result => response.send(result))
         .catch(next);
 });
