@@ -31,12 +31,22 @@ client.query(`
         err => console.error(err)
     );
 
-
 client.query(`
     CREATE TABLE IF NOT EXISTS been (
         user_id INT references users(user_id),
         spot_id INT references spots(spot_id)
     );
+`)
+    .then(
+        () => console.log('been table created'),
+        err => console.error(err)
+    );
+
+client.query(`
+CREATE TABLE IF NOT EXISTS good (
+    user_id INT references users(user_id),
+    spot_id INT references spots(spot_id)
+);
 `)
     .then(
         () => console.log('been table created'),

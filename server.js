@@ -215,9 +215,9 @@ app.delete('/api/v1/spots/:id', validateUser, (request, response, next) => {
         .catch(next);
 });
 
-function countBeen(id) {
+function countVotes(id, table) {
     return client.query(`
-        SELECT COUNT(*) FROM been
+        SELECT COUNT(*) FROM ${table}
         WHERE spot_id=$1;
     `,
     [id]
@@ -225,39 +225,101 @@ function countBeen(id) {
         .then(result => result.rows[0].count);
 }
 
-app.get('/api/v1/spots/:id/been', (request, response, next) => {
-    const spot_id = request.params.id;
-    
-    countBeen(spot_id)
-        .then(result => response.send(result))
-        .catch(next);
-});
-
-app.post('/api/v1/spots/:id/been', validateUser, (request, response, next) => {
+function postVotes(request, response, next, table, message) {
     const user_id = request.user_id;
     const spot_id = request.params.id;
     
     client.query(`
-        SELECT * FROM been
+        SELECT * FROM ${table}
         WHERE user_id=$1 AND spot_id=$2;
     `,
     [user_id, spot_id]
     )
         .then(result => {
             if(result.rows.length !== 0) {
-                return next({ status: 403, message: 'you have already reported being here'});
+                return next({ status: 403, message: message});
             }
             return client.query(`
-                INSERT INTO been (user_id, spot_id)
+                INSERT INTO ${table} (user_id, spot_id)
                 VALUES ($1, $2);
             `,
             [user_id, spot_id]
             )
-                .then(countBeen(spot_id)
+                .then(countVotes(spot_id, table)
                     .then(result => response.send(result))
                     .catch(next));
         });
+}
+
+app.get('/api/v1/spots/:id/been', (request, response, next) => {
+    const spot_id = request.params.id;
+    
+    countVotes(spot_id, 'been')
+        .then(result => response.send(result))
+        .catch(next);
 });
+
+app.post('/api/v1/spots/:id/been', validateUser, (request, response, next) => {
+    postVotes(request, response, next, 'been', 'you have already reported being here');
+});
+
+app.get('/api/v1/spots/:id/good', (request, response, next) => {
+    const spot_id = request.params.id;
+    
+    countVotes(spot_id, 'good')
+        .then(result => response.send(result))
+        .catch(next);
+});
+
+app.post('/api/v1/spots/:id/good', validateUser, (request, response, next) => {
+    postVotes(request, response, next, 'good', 'you have already liked this tip');
+});
+
+// app.get('/api/v1/spots/:id/been', (request, response, next) => {
+//     const spot_id = request.params.id;
+    
+//     return client.query(`
+//         SELECT COUNT(*) FROM been
+//         WHERE spot_id=$1;
+//     `,
+//     [spot_id]
+//     )
+//         .then(result => response.send(result.rows[0].count))
+//         .catch(next);
+// });
+
+// app.post('/api/v1/spots/:id/been', validateUser, (request, response, next) => {
+//     const user_id = request.user_id;
+//     const spot_id = request.params.id;
+    
+//     client.query(`
+//         SELECT * FROM been
+//         WHERE user_id=$1 AND spot_id=$2;
+//     `,
+//     [user_id, spot_id]
+//     )
+//         .then(result => {
+//             if(result.rows.length !== 0) {
+//                 return next({ status: 403, message: 'you have already reported being here'});
+//             }
+//             return client.query(`
+//                 INSERT INTO been (user_id, spot_id)
+//                 VALUES ($1, $2);
+//             `,
+//             [user_id, spot_id]
+//             );
+//         })
+//         .then(() => {
+//             return client.query(`
+//                 SELECT COUNT(*) FROM been
+//                 WHERE spot_id=$1;
+//                 `,
+//             [spot_id]
+//             )
+//                 .then(result => response.send(result.rows[0].count));
+//         })
+//         .catch(next);
+// });
 
 app.use((err, request, response, next) => { // eslint-disable-line
     console.error(err);
