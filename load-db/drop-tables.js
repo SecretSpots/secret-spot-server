@@ -3,6 +3,7 @@
 const client = require('../db-client');
 
 client.query(`
+    DROP TABLE IF EXISTS been;
     DROP TABLE IF EXISTS spots;
     DROP TABLE IF EXISTS users;
 `)

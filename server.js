@@ -104,19 +104,16 @@ app.post('/api/v1/auth/signin', (request, response, next) => {
         });
 });
 
-app.get('/api/v1/spots', (request, response) => {
+app.get('/api/v1/spots', (request, response, next) => {
     client.query(`
         SELECT spots.name, spots.address, spots.lat, spots.lng, spots.note, spots.date, spots.spot_id, users.username 
         FROM spots
         INNER JOIN users
-        ON (spots.user_id = users.user_id);
+        ON (spots.user_id = users.user_id)
+        ORDER BY spots.name ASC;
     `)
-        .then(results => response.send(results.rows))
-        .catch(error => {
-            console.error(error);
-            response.sendStatus(500);
-        });
-
+        .then(result => response.send(result.rows))
+        .catch(next);
 });
 
 app.get('/api/v1/spots/:id', (request, response, next) => {
@@ -216,6 +213,50 @@ app.delete('/api/v1/spots/:id', validateUser, (request, response, next) => {
         })
         .then(result => response.send({ removed: result.rows[0].name }))
         .catch(next);
+});
+
+function countBeen(id) {
+    return client.query(`
+        SELECT COUNT(*) FROM been
+        WHERE spot_id=$1;
+    `,
+    [id]
+    )
+        .then(result => result.rows[0].count);
+}
+
+app.get('/api/v1/spots/:id/been', (request, response, next) => {
+    const spot_id = request.params.id;
+    
+    countBeen(spot_id)
+        .then(result => response.send(result))
+        .catch(next);
+});
+
+app.post('/api/v1/spots/:id/been', validateUser, (request, response, next) => {
+    const user_id = request.user_id;
+    const spot_id = request.params.id;
+    
+    client.query(`
+        SELECT * FROM been
+        WHERE user_id=$1 AND spot_id=$2;
+    `,
+    [user_id, spot_id]
+    )
+        .then(result => {
+            if(result.rows.length !== 0) {
+                return next({ status: 403, message: 'you have already reported being here'});
+            }
+            return client.query(`
+                INSERT INTO been (user_id, spot_id)
+                VALUES ($1, $2);
+            `,
+            [user_id, spot_id]
+            )
+                .then(countBeen(spot_id)
+                    .then(result => response.send(result))
+                    .catch(next));
+        });
 });
 
 app.use((err, request, response, next) => { // eslint-disable-line
