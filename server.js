@@ -106,11 +106,16 @@ app.post('/api/v1/auth/signin', (request, response, next) => {
 
 app.get('/api/v1/spots', (request, response, next) => {
     client.query(`
-        SELECT spots.name, spots.address, spots.lat, spots.lng, spots.note, spots.date, spots.spot_id, users.username 
+        SELECT spots.name, spots.address, spots.lat, spots.lng, spots.note, spots.date, spots.spot_id, users.username, been_nums.count AS "beenHereCount", good_nums.count AS "goodSpotCount"
         FROM spots
         INNER JOIN users
         ON (spots.user_id = users.user_id)
+        LEFT JOIN (SELECT been.spot_id, COUNT(been.spot_id) FROM been GROUP BY been.spot_id) AS been_nums
+        ON been_nums.spot_id = spots.spot_id
+        LEFT JOIN (SELECT good.spot_id, COUNT(good.spot_id) FROM good GROUP BY good.spot_id) AS good_nums
+        ON good_nums.spot_id = spots.spot_id
         ORDER BY spots.name ASC;
+
     `)
         .then(result => response.send(result.rows))
         .catch(next);
@@ -119,11 +124,15 @@ app.get('/api/v1/spots', (request, response, next) => {
 app.get('/api/v1/spots/:id', (request, response, next) => {
     const id = request.params.id;
     client.query(`
-        SELECT spots.name, spots.address, spots.note, spots.date, spots.spot_id, users.username 
+        SELECT spots.name, spots.address, spots.note, spots.date, spots.spot_id, users.username, been_nums.count AS "beenHereCount", good_nums.count AS "goodSpotCount"
         FROM spots
         INNER JOIN users
         ON (spots.user_id = users.user_id)
-        WHERE spot_id = $1;
+        LEFT JOIN (SELECT been.spot_id, COUNT(been.spot_id) FROM been GROUP BY been.spot_id) AS been_nums
+        ON been_nums.spot_id = spots.spot_id
+        LEFT JOIN (SELECT good.spot_id, COUNT(good.spot_id) FROM good GROUP BY good.spot_id) AS good_nums
+        ON good_nums.spot_id = spots.spot_id
+        WHERE spots.spot_id = $1;
     `,
     [id]
     )
