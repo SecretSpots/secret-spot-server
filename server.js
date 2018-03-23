@@ -213,7 +213,7 @@ app.delete('/api/v1/spots/:id', validateUser, (request, response, next) => {
         .catch(next);
 });
 
-app.get('/api/v1/spots/:id/votes', validateUser, (request, response, next) => {
+app.get('/api/v1/check/:id/votes', validateUser, (request, response, next) => {
     const spot_id = request.params.id;
 
     client.query(`
@@ -229,7 +229,7 @@ app.get('/api/v1/spots/:id/votes', validateUser, (request, response, next) => {
         .catch(next);
 });
 
-app.get('/api/v1/spots/votes', validateUser, (request, response, next) => {
+app.get('/api/v1/check/votes', validateUser, (request, response, next) => {
 
     client.query(`
         SELECT ARRAY(SELECT spot_id FROM been WHERE user_id = $1) AS "beenArray",
