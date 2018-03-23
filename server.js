@@ -113,7 +113,6 @@ app.get('/api/v1/spots', (request, response, next) => {
         LEFT JOIN (SELECT good.spot_id, COUNT(good.spot_id) FROM good GROUP BY good.spot_id) AS good_nums
         ON good_nums.spot_id = spots.spot_id
         ORDER BY spots.name ASC;
-
     `)
         .then(result => response.send(result.rows))
         .catch(next);
@@ -214,6 +213,34 @@ app.delete('/api/v1/spots/:id', validateUser, (request, response, next) => {
         .catch(next);
 });
 
+app.get('/api/v1/spots/:id/votes', validateUser, (request, response, next) => {
+    const spot_id = request.params.id;
+
+    client.query(`
+        SELECT been.user_id, been.spot_id AS "beenHere", good_results.spot_id AS "likedHere"
+        FROM been
+        FULL JOIN (SELECT good.spot_id, COUNT(*) FROM good WHERE good.user_id = $1 AND good.spot_id = $2 GROUP BY good.spot_id) AS good_results
+        ON (been.spot_id = good_results.spot_id)
+        WHERE been.user_id = $1 AND been.spot_id = $2;
+    `,
+    [request.user_id, spot_id]
+    )
+        .then(result => response.send(result))
+        .catch(next);
+});
+
+app.get('/api/v1/spots/votes', validateUser, (request, response, next) => {
+
+    client.query(`
+        SELECT ARRAY(SELECT spot_id FROM been WHERE user_id = $1) AS "beenArray",
+        ARRAY(SELECT spot_id FROM good WHERE user_id = $1) AS "goodArray";
+    `,
+    [request.user_id]
+    )
+        .then(result => response.send(result))
+        .catch(next);
+});
+
 app.post('/api/v1/spots/:id/been', validateUser, (request, response, next) => {
     postVotes(request, response, next, 'been', 'you have already reported being here');
 });
@@ -243,7 +270,7 @@ function postVotes(request, response, next, table, message) {
             [user_id, spot_id]
             );
         })
-        .then(result => response.send(result.rows[0]))
+        .then(result => response.send(result))
         .catch(next);
 }
 
