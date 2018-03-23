@@ -4,13 +4,11 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const PORT = process.env.PORT;
-const MAPS_API_KEY = process.env.MAPS_API_KEY; //eslint-disable-line
 const TOKEN_KEY = process.env.TOKEN_KEY;
 
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
-// const sa = require('superagent');
 const jwt = require('jsonwebtoken');
 const app = express();
 
@@ -145,15 +143,7 @@ app.get('/api/v1/spots/:id', (request, response, next) => {
 
 function insertSpot(spot, user_id) {
     return client.query(`
-        INSERT INTO spots (
-            name,
-            user_id,     
-            address, 
-            lat,
-            lng,
-            note,
-            date
-        )
+        INSERT INTO spots (name, user_id, address, lat, lng, note, date)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *;
     `,
@@ -224,39 +214,13 @@ app.delete('/api/v1/spots/:id', validateUser, (request, response, next) => {
         .catch(next);
 });
 
-app.get('/api/v1/spots/:id/been', (request, response, next) => {
-    const spot_id = request.params.id;
-    
-    countVotes(spot_id, 'been')
-        .then(result => response.send(result))
-        .catch(next);
-});
-
 app.post('/api/v1/spots/:id/been', validateUser, (request, response, next) => {
     postVotes(request, response, next, 'been', 'you have already reported being here');
-});
-
-app.get('/api/v1/spots/:id/good', (request, response, next) => {
-    const spot_id = request.params.id;
-    
-    countVotes(spot_id, 'good')
-        .then(result => response.send(result))
-        .catch(next);
 });
 
 app.post('/api/v1/spots/:id/good', validateUser, (request, response, next) => {
     postVotes(request, response, next, 'good', 'you have already liked this tip');
 });
-
-function countVotes(id, table) {
-    return client.query(`
-        SELECT COUNT(*) FROM ${table}
-        WHERE spot_id=$1;
-    `,
-    [id]
-    )
-        .then(result => result.rows[0].count);
-}
 
 function postVotes(request, response, next, table, message) {
     const user_id = request.user_id;
@@ -277,11 +241,10 @@ function postVotes(request, response, next, table, message) {
                 VALUES ($1, $2);
             `,
             [user_id, spot_id]
-            )
-                .then(countVotes(spot_id, table)
-                    .then(result => response.send(result))
-                    .catch(next));
-        });
+            );
+        })
+        .then(result => response.send(result.rows[0]))
+        .catch(next);
 }
 
 app.use((err, request, response, next) => { // eslint-disable-line
