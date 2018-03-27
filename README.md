@@ -1,5 +1,7 @@
 # Secret Spots
 
+//initial commit 
+
 **Author**: Steele Walston, Jen Lipton, Henry Oliveira, Keli Hansen
 **Version**: 1.0.0
 
