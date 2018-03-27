@@ -30,7 +30,7 @@ function validateUser(request, response, next) {
     } catch(err) {
         return next({ status: 403, message: 'not permitted' });
     }
-
+    // nice work managing the payload correctly for your given use!
     request.user_id = decoded.id;
     next();
 }
@@ -103,8 +103,10 @@ app.post('/api/v1/auth/signin', (request, response, next) => {
 });
 
 app.get('/api/v1/spots', (request, response, next) => {
+    // try and keep lines from getting too long
     client.query(`
-        SELECT spots.name, spots.address, spots.lat, spots.lng, spots.note, spots.date, spots.spot_id, users.username, been_nums.count AS "beenHereCount", good_nums.count AS "goodSpotCount"
+        SELECT spots.name, spots.address, spots.lat, spots.lng, spots.note, spots.date, spots.spot_id, 
+               users.username, been_nums.count AS "beenHereCount", good_nums.count AS "goodSpotCount"
         FROM spots
         INNER JOIN users
         ON (spots.user_id = users.user_id)
@@ -121,7 +123,8 @@ app.get('/api/v1/spots', (request, response, next) => {
 app.get('/api/v1/spots/:id', (request, response, next) => {
     const id = request.params.id;
     client.query(`
-        SELECT spots.name, spots.address, spots.note, spots.date, spots.spot_id, users.username, been_nums.count AS "beenHereCount", good_nums.count AS "goodSpotCount"
+        SELECT spots.name, spots.address, spots.note, spots.date, spots.spot_id, users.username, 
+               been_nums.count AS "beenHereCount", good_nums.count AS "goodSpotCount"
         FROM spots
         INNER JOIN users
         ON (spots.user_id = users.user_id)
@@ -151,7 +154,8 @@ function insertSpot(spot, user_id) {
         .then(result => result.rows[0]);
 }
 
-app.post('/api/v1/spots/new', validateUser, (request, response, next) => {
+// Don't put verbs into the paths. "POST" already means "new"
+app.post('/api/v1/spots', validateUser, (request, response, next) => {
     const body = request.body;
     const user_id = request.user_id;
 
@@ -160,27 +164,34 @@ app.post('/api/v1/spots/new', validateUser, (request, response, next) => {
         .catch(next);
 });
 
-app.put('/api/v1/spots/:id', validateUser, (request, response, next) => {
-    const body = request.body;
-    const spot_id = request.params.id;
-
+function validateOwnership(spotId, userId, action) {
     client.query(`
         SELECT user_id FROM spots
         WHERE spot_id=$1;
     `,
-    [spot_id]
+    [spotId]
     )
         .then(result => {
-            if(result.rows[0].user_id !== request.user_id) {
-                return next({ status: 403, message: 'You may only update spots you created'});
+            if(result.rows[0].user_id !== userId) {
+                throw { status: 403, message: `You may only ${action} spots you created`};
             }
+        });
+}
+
+app.put('/api/v1/spots/:id', validateUser, (request, response, next) => {
+    const body = request.body;
+    // JavaScript doesn't generally use snake_case idiomatically
+    const spotId = request.params.id;
+
+    validateOwnership(spotId, request.user_id, 'update')
+        .then(() => {
             return client.query(`
                 UPDATE spots
                 SET note=$1
                 WHERE spot_id=$2
                 RETURNING note;
             `,
-            [body.note, spot_id]
+            [body.note, spotId]
             );
         })
         .then(result => response.send(result.rows[0]))
@@ -189,24 +200,16 @@ app.put('/api/v1/spots/:id', validateUser, (request, response, next) => {
 });
 
 app.delete('/api/v1/spots/:id', validateUser, (request, response, next) => {
-    const spot_id = request.params.id;
-
-    client.query(`
-        SELECT user_id FROM spots
-        WHERE spot_id=$1;
-    `,
-    [spot_id]
-    )
-        .then(result => {
-            if (result.rows[0].user_id !== request.user_id) {
-                return next({ status: 403, message: 'you may only delete spots you created' });
-            }
+    const spotId = request.params.id;
+    
+    validateOwnership(spotId, request.user_id, 'delete')
+        .then(() => {
             return client.query(`
                 DELETE FROM spots
                 WHERE spot_id=$1
                 RETURNING name;
             `,
-            [spot_id]
+            [spotId]
             );
         })
         .then(result => response.send({ removed: result.rows[0].name }))
